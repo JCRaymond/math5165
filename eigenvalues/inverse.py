@@ -1,53 +1,53 @@
 #!/usr/bin/env python3.9
 
 import numpy as np
+from sys import stderr
+
 
 def normalize(vec):
-   return vec / np.linalg.norm(vec)
+    return vec / np.linalg.norm(vec)
 
-def power_eigenvec(A, epsilon=1e-6):
-   if len(A.shape) != 2 or A.shape[0] != A.shape[1]:
-      return None
 
-   n = A.shape[0]
-   x = normalize([np.ones(n)]).T
-   
-   while True:
-      x_old = x
-      x = normalize(A * (A * x))
+def col(vec):
+    return np.atleast_2d(vec).T
 
-      dist = np.linalg.norm(x - x_old, ord=float('inf'))
-      if dist < epsilon:
-         return x
 
 def inverse_eigenvec(A, epsilon=1e-6):
-   if len(A.shape) != 2 or A.shape[0] != A.shape[1] or np.linalg.det(A) == 0:
-      return None
+    if len(A.shape) != 2 or A.shape[0] != A.shape[1] or np.linalg.det(A) == 0:
+        return None
 
-   A_inv = np.linalg.inv(A)
-   return power_eigenvec(A_inv, epsilon)
+    n = A.shape[0]
+    x = normalize(col(np.random.rand(n)))
 
-def power_e_val_vec(A, epsilon=1e-6):
-   e_vec = power_eigenvec(A)
-   val_vec = (A*e_vec)/e_vec
-   e_val = max(val_vec.max(), val_vec.min(), key=abs)
-   return e_val, e_vec
+    A_inv = np.linalg.inv(A)
+
+    dist = 1 + epsilon
+
+    iters = 0
+    while dist > epsilon:
+        x_old = x
+
+        # Perform two iterations to handle negative eigenvalues
+        x = normalize(A_inv * (A_inv * x))
+        iters += 2
+
+        dist = np.linalg.norm(x - x_old, ord=np.inf)
+
+    print(f'Num Iters: {iters}', file=stderr)
+
+    return x
+
 
 def inverse_e_val_vec(A, epsilon=1e-6):
-   if len(A.shape) != 2 or A.shape[0] != A.shape[1] or np.linalg.det(A) == 0:
-      return None
+    e_vec = inverse_eigenvec(A, epsilon)
+    # Rayleigh quotient of an eigenvector is its eigenvalue
+    e_val = (e_vec.T * (A * e_vec)).item()
+    return e_val, e_vec
 
-   A_inv = np.linalg.inv(A)
-   val, vec = power_e_val_vec(A_inv)
-   return 1/val, vec
 
 if __name__ == "__main__":
 
-   A = np.matrix([
-      [1, 2, 3],
-      [4, 5, 4],
-      [3, 2, 1]
-   ])
-   val, vec = inverse_e_val_vec(A)
+    A = np.matrix([[-1, 0, 0], [0, 2, 0], [0, 0, -3]])
+    val, vec = inverse_e_val_vec(A)
 
-   print(val, vec)
+    print(val, vec)
