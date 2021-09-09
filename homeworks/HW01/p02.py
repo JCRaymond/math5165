@@ -13,16 +13,17 @@ def rref(A, epsilon=1e-10):
         # Find largest pivot position in this column
         piv_row = max(range(piv_loc, X.shape[0]),
                       key=lambda r: np.abs(X[r, piv_col]))
+        piv_val = X[piv_row, piv_col]
 
-        if np.abs(X[piv_row, piv_col]) < epsilon:
+        if np.abs(piv_val) < epsilon:
             continue
         piv_cols.append(piv_col)
 
         if piv_loc != piv_row:
-            X[(piv_loc, piv_row)] = X[(piv_row, piv_loc)]
+            X[(piv_loc, piv_row), :] = X[(piv_row, piv_loc), :]
 
         X[piv_loc, :piv_col] = np.zeros(piv_col)
-        X[piv_loc, piv_col:] /= X[piv_loc, piv_col]
+        X[piv_loc, piv_col:] /= piv_val
 
         # Eliminate other rows
         for row in range(X.shape[0]):
