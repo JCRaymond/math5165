@@ -14,14 +14,15 @@ def rsref(A, epsilon=1e-10):
         # Find largest pivot position in this column
         piv_row = max(set(range(X.shape[0])) - piv_rows,
                       key=lambda r: np.abs(X[r, piv_col]))
+        piv_val = X[piv_row, piv_col]
 
-        if np.abs(X[piv_row, piv_col]) < epsilon:
+        if np.abs(piv_val) < epsilon:
             continue
         piv_rows.add(piv_row)
         piv_poss.append((piv_row, piv_col))
 
         X[piv_row, :piv_col] = np.zeros(piv_col)
-        X[piv_row, piv_col:] /= X[piv_row, piv_col]
+        X[piv_row, piv_col:] /= piv_val
 
         # Eliminate other rows
         for row in range(X.shape[0]):
@@ -37,20 +38,22 @@ def rref(A, epsilon=1e-10):
     X = np.matrix(A, dtype=np.float64)
     piv_cols = []
     for piv_col in range(X.shape[1]):
+        print(X)
         piv_loc = len(piv_cols)
         # Find largest pivot position in this column
         piv_row = max(range(piv_loc, X.shape[0]),
                       key=lambda r: np.abs(X[r, piv_col]))
+        piv_val = X[piv_row, piv_col]
 
-        if np.abs(X[piv_row, piv_col]) < epsilon:
+        if np.abs(piv_val) < epsilon:
             continue
         piv_cols.append(piv_col)
 
         if piv_loc != piv_row:
-            X[(piv_loc, piv_row)] = X[(piv_row, piv_loc)]
+            X[(piv_loc, piv_row), :] = X[(piv_row, piv_loc), :]
 
         X[piv_loc, :piv_col] = np.zeros(piv_col)
-        X[piv_loc, piv_col:] /= X[piv_loc, piv_col]
+        X[piv_loc, piv_col:] /= piv_val
 
         # Eliminate other rows
         for row in range(X.shape[0]):
@@ -72,12 +75,16 @@ def CR(A):
 if __name__ == '__main__':
 
     # A = np.matrix([[0, 1, 1], [2, 2, 2], [3, 3, 3]])
-    A = np.random.rand(6, 6)
-    A[:, 4] = 3 * A[:, 2] + 2 * A[:, 1] - A[:, 0]
-    A[:, 3] = A[:, 1] - A[:, 0]
+    #A = np.random.rand(6, 6)
+    #A[:, 4] = 3 * A[:, 2] + 2 * A[:, 1] - A[:, 0]
+    #A[:, 3] = A[:, 1] - A[:, 0]
+    A = np.matrix([[-1, 1, 0, 0, 0], [1, 0, -1, 0, 0], [0, 1, -1, 0, 0],
+                   [-1, 0, 0, 1, 0], [0, -1, 0, 0, 1], [0, 0, 1, -1, 0],
+                   [0, 0, -1, 0, 1], [0, 0, 0, 1, -1]])
 
     print(A)
     C, R = CR(A)
-    print(C, R)
+    print(C)
+    print(R)
     print(C * R)
     print(np.linalg.norm(A - C * R, ord='fro') < 1e-6)
