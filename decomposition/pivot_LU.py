@@ -48,8 +48,8 @@ def P_LU(A, epsilon=1e-10):
 
     # Calculate P based on where the rows "end up" (based on rows)
     P = np.zeros((A.shape[0], A.shape[0]))
-    for c, r in enumerate(rows):
-        P[c, r] = 1
+    for loc in enumerate(rows):
+        P[loc] = 1
 
     return P, L, U
 
