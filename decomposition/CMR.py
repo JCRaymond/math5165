@@ -3,8 +3,8 @@
 import numpy as np
 
 
-# Returns a matrix R which is A in reduced row-echelon form, along with
-# a list of indices representing which columns of A have pivots.
+# Returns matrices C, M, and R such that C consists of independent columns of A,
+# R consists of indepnedent rows of A, and A = CMR.
 def CMR(A, epsilon=1e-10):
     X = np.matrix(A, dtype=np.float64)
     rows = list(range(A.shape[0]))
