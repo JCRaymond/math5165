@@ -57,7 +57,7 @@ def P_LU(A, epsilon=1e-10):
 if __name__ == '__main__':
 
     #A = np.matrix([[1, 2, 3], [4, 5, 4], [3, 2, 1]])
-    A = np.random.rand(5, 6)
+    A = np.random.rand(6, 6)
     A[:, 4] = 3 * A[:, 2] + 2 * A[:, 1] - A[:, 0]
     A[:, 3] = A[:, 1] - A[:, 0]
 
