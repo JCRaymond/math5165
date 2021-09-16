@@ -2,15 +2,40 @@
 
 import numpy as np
 
+def givens_rot(n, i, a, j, b, epsilon=1e-10):
+    G = np.eye(n)
+    r = np.hypot(a, b)
+    if np.abs(b) < epsilon or np.abs(r) < epsilon:
+        return G
+    c = a / r
+    s = b / r
+    G[i, i] = c
+    G[i, j] = s
+    G[j, i] = -s
+    G[j, j] = c
+    return G
 
-# Returns a matrix R which is A in reduced row-echelon form, along with
-# a list of indices representing which columns of A have pivots.
-def ref(A, epsilon=1e-10):
+
+# Return two matrices G, X such that A = G * X * G.T where X is in Hessenberg
+# form and G is an orthonormal matrix.
+def QR(A, epsilon=1e-10):
+    n = A.shape[0]
+    R = np.matrix(A)
+    Q = np.eye(n)
+    for col in range(R.shape[1] - 1):
+        for row in range(R.shape[0] - 1, col, -1):
+            G_i = givens_rot(n, row - 1, R[row - 1, col], row, R[row, col])
+            Q = Q @ G_i.T
+            R = G_i @ R
+    return Q, R
+
+# Returns a non-zero vector in the null space of A if one exists, returns
+# the zero vector otherwise.
+def null_vec(A, epsilon=1e-10):
     X = np.matrix(A, dtype=np.float64)
-    num_pivs = 0
+    piv_cols = {}
     for piv_col in range(X.shape[1]):
-        print(X)
-        piv_loc = num_pivs
+        piv_loc = len(piv_cols)
         # Find largest pivot position in this column
         piv_row = max(range(piv_loc, X.shape[0]),
                       key=lambda r: np.abs(X[r, piv_col]))
@@ -18,35 +43,49 @@ def ref(A, epsilon=1e-10):
 
         if np.abs(piv_val) < epsilon:
             continue
-        num_pivs += 1
+        piv_cols[piv_col] = piv_row
 
         if piv_loc != piv_row:
             X[(piv_loc, piv_row), :] = X[(piv_row, piv_loc), :]
 
         X[piv_loc, :piv_col] = np.zeros(piv_col)
-        normed_piv_row = X[piv_loc, piv_col:] / piv_val
+        X[piv_loc, piv_col:] /= piv_val
 
         # Eliminate other rows
         for row in range(X.shape[0]):
             if row != piv_loc:
-                X[row, piv_col:] -= X[row, piv_col] * normed_piv_row
+                X[row, piv_col:] -= X[row, piv_col] * X[piv_loc, piv_col:]
+    
+    vec = np.zeros(X.shape[1])
+    for i in range(X.shape[1]):
+        if i not in piv_cols:
+            vec[i] = 1
+            continue
 
-    return X
-
+        row = piv_cols[i]
+        vec[i] -= np.sum(X[piv_row, i+1:X.shape[1]])
+    vec = np.atleast_2d(vec).T
+    vec_norm = np.linalg.norm(vec)
+    if np.abs(vec_norm) < epsilon:
+        return vec
+    return vec / vec_norm
 
 def QD(A, epsilon=1e-10):
    if A.shape != A.T.shape or np.linalg.norm(A - A.T, ord=np.inf) > epsilon:
       return None
 
-   D = ref(A)
-   return [R[i,i] for i in range(R.shape[0])]
-   ||(A-lI)x|| = 0 = <x, h>
+   Q = np.eye(A.shape[0])
+   D = np.matrix(A)
+   dist = 1 + epsilon
+   while dist > epsilon:
+       Q_, R = QR(D)
+       D_new = R @ Q_
+       Q = Q @ Q_
 
-   A-lIx = 0
-
-   (A-lI)x = 0
-
-
+       dist = np.linalg.norm(D - D_new, ord='fro')
+       D = D_new
+   
+   return Q, D
 
 if __name__ == '__main__':
 
@@ -60,4 +99,8 @@ if __name__ == '__main__':
     A = (A + A.T)/2
 
     print(A)
-    print(sym_evals(A))
+    Q, D = QD(A)
+    print(Q)
+    print(D)
+    print(Q @ D @ Q.T)
+    print(Q @ Q.T)
