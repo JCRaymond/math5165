@@ -49,7 +49,7 @@ def shift_QR(Q, R, u, v):
         # ops = 6 * (n-i) -=- apply Givens rotation: 6 flops/column, n-i columns
         R_prime[i:i + 2, i:] = G @ R_prime[i:i + 2, i:]
 
-        # ops = 6 * (n-i) -=- apply Givens rotation: 6 flops/column, n columns
+        # ops = 6 * n -=- apply Givens rotation: 6 flops/column, n columns
         Q_prime[:, i:i + 2] = Q_prime[:, i:i + 2] @ G.T
 
         b = np.hypot(a, b)  # ops = O(1)
@@ -75,7 +75,7 @@ def QR(A):
     Q = np.eye(n)  # ops = n^2
     R = np.matrix(A)  # ops = n^2
 
-    for i in range(n - 1):  # iterate i = 0, 1, ..., n-2, n-1
+    for i in range(n - 1):  # iterate i = 0, 1, ..., n-2
         h = np.matrix(R[i:, i])  # ops = n-i -=- copy bottom of ith column of R
         h_norm = la.norm(h)  # ops = 2n
 
