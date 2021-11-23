@@ -3,6 +3,7 @@
 import os
 import numpy as np
 import pickle
+import multiprocessing as mp
 
 
 class RatingsInfo:
@@ -215,21 +216,118 @@ def svd(A, *, B=None, k=None, s_min=None, epsilon=1e-12):
     return U, S, V.T
 
 
-def main():
+def svd_main():
+    print('Getting info about ratings...')
+    ri = get_ratingsinfo('./data/training_set')
+    print('Getting training and test data...')
+    train, test = get_train_test_split(ri, 0.01)
+    del train
+
+    #print('Begin svd:')
+    #U, S, Vt = svd(train, B=get_B(train), k=1000, s_min=0.05)
+
+    #with open('U.data', 'wb') as f:
+    #    pickle.dump(U, f)
+    #with open('S.data', 'wb') as f:
+    #    pickle.dump(S, f)
+    #with open('Vt.data', 'wb') as f:
+    #    pickle.dump(Vt, f)
+
+    with open('U.data', 'rb') as f:
+        U = pickle.load(f)
+    with open('S.data', 'rb') as f:
+        S = pickle.load(f)
+    with open('Vt.data', 'rb') as f:
+        Vt = pickle.load(f)
+
+    test_rs, test_cs, test_ratings = test
+    for i, p in enumerate((5, 10, 25, 50, 75, 104)):
+        ESUM = 0
+        US_p = U[:, :p] * S[:p]
+        Vt_p = Vt[:p, :]
+        for i in range(len(test_rs)):
+            r = test_rs[i]
+            c = test_cs[i]
+            rating = test_ratings[i]
+            prediction = US_p[r:r + 1, :] @ Vt_p[:, c:c + 1]
+            delta = rating - prediction
+            delta = delta.item()
+            ESUM += delta * delta
+        error = ESUM**0.5
+        print(f'Rank {p} approximation RMSE: {ESUM}')
+
+
+def k_means(A, k, *, step=100, epsilon=1e-12):
+    n, m = A.shape
+    U = np.array(A[:, :k])  # Initialize clusters centered at first k columns
+    R = np.zeros(A.shape[1], dtype=np.int32)
+
+    print('Initializing R_vals...')
+    R_vals = np.empty(A.shape[1])
+    deltas = np.empty(A.shape[1])
+    u_0 = U[:, 0]
+    A_part = np.empty((step, A.shape[0]))
+    temp = np.empty(A_part.shape)
+    for i in range(0, m, step):
+        iu = i + step
+        iu = iu if iu < m else m
+        di = iu - i
+        A_part[:di, :] = A.T[i:iu, :]
+        temp[:di, :] = A_part[:di, :] - u_0
+        temp[:di, :] *= temp[:di, :]
+        R_vals[i:iu] = np.sum(temp[:di, :], axis=1)
+
+    changed = True
+    while changed:
+        changed = False
+        if os.path.isfile('./STOPKMEANS'):
+            break
+        print('Updating R_vals...')
+        for j in range(k):
+            u_j = U[:, j]
+            for i in range(0, m, step):
+                iu = i + step
+                iu = iu if iu < m else m
+                di = iu - i
+                A_part[:di, :] = A.T[i:iu, :]
+                temp[:di, :] = A_part[:di, :] - u_j
+                temp[:di, :] *= temp[:di, :]
+                deltas[i:iu] = np.sum(temp[:di, :], axis=1)
+            update_idxs = tuple(np.argwhere(deltas < R_vals).T)
+            if len(update_idxs) > 0:
+                changed = True
+            R[update_idxs] = j
+            R_vals[update_idxs] = deltas[update_idxs]
+
+        if changed:
+            print('Updating U...')
+            for j in range(k):
+                idxs = np.argwhere(R == j)
+                l = len(idxs)
+                idxs = idxs.reshape((l, ))
+                temp.fill(0)
+                for i in range(0, l, step):
+                    iu = i + step
+                    iu = iu if iu < l else l
+                    di = iu - i
+                    temp[:di, :] += A.T[idxs[i:iu], :]
+                U[:, j] = np.sum(temp, axis=0) / len(idxs)
+
+    return U, R
+
+
+def k_means_main():
     print('Getting info about ratings...')
     ri = get_ratingsinfo('./data/training_set')
     print('Getting training and test data...')
     train, test = get_train_test_split(ri, 0.01)
 
-    print('Begin svd:')
-    U, S, Vt = svd(train, B=get_B(train), k=1000, s_min=0.05)
+    C, R = k_means(train, 50, step=10000)
 
-    with open('U.data', 'wb') as f:
-        pickle.dump(U, f)
-    with open('S.data', 'wb') as f:
-        pickle.dump(S, f)
-    with open('Vt.data', 'wb') as f:
-        pickle.dump(Vt, f)
+    with open('C.data', 'wb') as f:
+        pickle.dump(C, f)
+    with open('R.data', 'wb') as f:
+        pickle.dump(R, f)
 
 
 def test():
@@ -243,5 +341,6 @@ def test():
 
 
 if __name__ == '__main__':
-    main()
+    #svd_main()
     #test()
+    k_means_main()
