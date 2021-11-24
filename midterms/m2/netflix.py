@@ -240,6 +240,8 @@ def svd_main():
     with open('Vt.data', 'rb') as f:
         Vt = pickle.load(f)
 
+    print(S[0], S[-1])
+
     test_rs, test_cs, test_ratings = test
     for i, p in enumerate((5, 10, 25, 50, 75, 104)):
         ESUM = 0
@@ -426,7 +428,30 @@ def test():
     print((U * S) @ Vt)
 
 
+def naive_predictor():
+    print('Getting info about ratings...')
+    ri = get_ratingsinfo('./data/training_set')
+    print('Getting training and test data...')
+    train, test = get_train_test_split(ri, 0.01)
+    del train
+
+    test_rs, test_cs, test_ratings = test
+    ESUM = 0
+    for i in range(len(test_rs)):
+        r = test_rs[i]
+        c = test_cs[i]
+        rating = test_ratings[i]
+        prediction = 3
+        delta = rating - prediction
+        delta = delta.item()
+        ESUM += delta * delta
+    ESUM /= len(test_rs)
+    error = ESUM**0.5
+    print(f'Naive RMSE: {error}')
+
+
 if __name__ == '__main__':
     svd_main()
     #test()
     k_means_main()
+    naive_predictor()
