@@ -1,0 +1,32 @@
+Getting info about ratings...
+Loading ratingsinfo from dump...
+Getting training and test data...
+Loading train-test-split from dump...
+Rank 5 approximation RMSE: 2.792041044388119
+Rank 10 approximation RMSE: 2.692293079991035
+Rank 25 approximation RMSE: 2.5949014493737876
+Rank 50 approximation RMSE: 2.543542232158585
+Rank 75 approximation RMSE: 2.5344363997755366
+Rank 104 approximation RMSE: 2.557012288870201
+Getting info about ratings...
+Loading ratingsinfo from dump...
+Getting training and test data...
+Loading train-test-split from dump...
+50-user cluster K-means RMSE: 3.228865917251569
+50-user cluster K-means, rank 5 svd RMSE: 3.3346934156307206
+50-user cluster K-means, rank 10 svd RMSE: 3.3221339940852816
+50-user cluster K-means, rank 15 svd RMSE: 3.277487731882054
+50-user cluster K-means, rank 20 svd RMSE: 3.2469135765862682
+50-user cluster K-means, rank 25 svd RMSE: 3.2409052444591784
+50-user cluster K-means, rank 30 svd RMSE: 3.235408181129402
+50-user cluster K-means, rank 35 svd RMSE: 3.2328186127352545
+50-user cluster K-means, rank 40 svd RMSE: 3.2311484051518837
+50-user cluster K-means, rank 45 svd RMSE: 3.2293638051208657
+50-user cluster K-means, rank 49 svd RMSE: 3.22886591725157
+50-user cluster, 50-movie cluster K-means RMSE: 3.577543386994016
+50-user cluster, 50-movie cluster K-means, rank 1 svd RMSE: 3.387257653282182
+50-user cluster, 50-movie cluster K-means, rank 2 svd RMSE: 3.3764534266981476
+50-user cluster, 50-movie cluster K-means, rank 3 svd RMSE: 3.347105511215508
+50-user cluster, 50-movie cluster K-means, rank 4 svd RMSE: 3.339168923305621
+50-user cluster, 50-movie cluster K-means, rank 5 svd RMSE: 3.3346934156307206
+50-user cluster, 50-movie cluster K-means, rank 6 svd RMSE: 3.3340200903664607

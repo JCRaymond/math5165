@@ -173,7 +173,7 @@ def svd(A, *, B=None, k=None, s_min=None, epsilon=1e-12):
     for i in range(k):
         if os.path.isfile('./STOPSVD'):
             break
-        print(f'Finding singular value {i+1}/{k}...')
+        #print(f'Finding singular value {i+1}/{k}...')
         # Take initial vector as first nonzero column of B
         for j in range(n):
             if np.linalg.norm(B[:, j]) != 0:
@@ -184,19 +184,19 @@ def svd(A, *, B=None, k=None, s_min=None, epsilon=1e-12):
 
         u = u / np.linalg.norm(u)
         dist = 1 + epsilon
-        print(f'\tConverging to eigenvector...')
+        #print(f'\tConverging to eigenvector...')
         while dist > epsilon:
             u_old = u
             u = B @ u
             u = u / np.linalg.norm(u)
 
             dist = np.linalg.norm(u - u_old)
-            print(f'\t\tdist: {dist}')
+            #print(f'\t\t{i} dist: {dist}')
 
-        print('\tCalculating v...')
+        #print('\tCalculating v...')
         v_unnormed = blockmul(A.T, u, a_step=16384, b_step=1)
         s = np.linalg.norm(v_unnormed)
-        print(f'\tFound singular value: {s}')
+        #print(f'\tFound singular value: {s}')
         if s <= s_min:
             break
         v = v_unnormed / s
@@ -205,7 +205,7 @@ def svd(A, *, B=None, k=None, s_min=None, epsilon=1e-12):
         V[:, i:i + 1] = v
         S[i] = s
 
-        print(f'\tUpdate B...')
+        #print(f'\tUpdate B...')
         u *= s
         B -= u @ u.T
     else:
@@ -253,8 +253,9 @@ def svd_main():
             delta = rating - prediction
             delta = delta.item()
             ESUM += delta * delta
+        ESUM /= len(test_rs)
         error = ESUM**0.5
-        print(f'Rank {p} approximation RMSE: {ESUM}')
+        print(f'Rank {p} approximation RMSE: {error}')
 
 
 def k_means(A, k, *, step=100, epsilon=1e-12):
@@ -277,12 +278,11 @@ def k_means(A, k, *, step=100, epsilon=1e-12):
         temp[:di, :] *= temp[:di, :]
         R_vals[i:iu] = np.sum(temp[:di, :], axis=1)
 
-    changed = True
-    while changed:
-        changed = False
+    num_changed = 1
+    while num_changed > 0:
+        num_changed = 0
         if os.path.isfile('./STOPKMEANS'):
             break
-        print('Updating R_vals...')
         for j in range(k):
             u_j = U[:, j]
             for i in range(0, m, step):
@@ -294,13 +294,12 @@ def k_means(A, k, *, step=100, epsilon=1e-12):
                 temp[:di, :] *= temp[:di, :]
                 deltas[i:iu] = np.sum(temp[:di, :], axis=1)
             update_idxs = tuple(np.argwhere(deltas < R_vals).T)
-            if len(update_idxs) > 0:
-                changed = True
+            num_changed += len(update_idxs[0])
             R[update_idxs] = j
             R_vals[update_idxs] = deltas[update_idxs]
+        print(num_changed)
 
-        if changed:
-            print('Updating U...')
+        if num_changed > 0:
             for j in range(k):
                 idxs = np.argwhere(R == j)
                 l = len(idxs)
@@ -311,7 +310,10 @@ def k_means(A, k, *, step=100, epsilon=1e-12):
                     iu = iu if iu < l else l
                     di = iu - i
                     temp[:di, :] += A.T[idxs[i:iu], :]
-                U[:, j] = np.sum(temp, axis=0) / len(idxs)
+                if len(idxs) > 0:
+                    U[:, j] = np.sum(temp, axis=0) / len(idxs)
+                else:
+                    U[:, j] = np.zeros(k)
 
     return U, R
 
@@ -321,13 +323,97 @@ def k_means_main():
     ri = get_ratingsinfo('./data/training_set')
     print('Getting training and test data...')
     train, test = get_train_test_split(ri, 0.01)
+    del train
 
-    C, R = k_means(train, 50, step=10000)
+    #C, R = k_means(train, 50, step=10000)
 
-    with open('C.data', 'wb') as f:
-        pickle.dump(C, f)
-    with open('R.data', 'wb') as f:
-        pickle.dump(R, f)
+    #with open('C.data', 'wb') as f:
+    #    pickle.dump(C, f)
+    #with open('R.data', 'wb') as f:
+    #    pickle.dump(R, f)
+
+    with open('C.data', 'rb') as f:
+        C = pickle.load(f)
+    with open('R.data', 'rb') as f:
+        R = pickle.load(f)
+
+    test_rs, test_cs, test_ratings = test
+    ESUM = 0
+    for i in range(len(test_rs)):
+        r = test_rs[i]
+        c = test_cs[i]
+        rating = test_ratings[i]
+        prediction = C[r, R[c]]
+        delta = rating - prediction
+        delta = delta.item()
+        ESUM += delta * delta
+    ESUM /= len(test_rs)
+    error = ESUM**0.5
+    print(f'50-user cluster K-means RMSE: {error}')
+
+    kU, kS, kVt = svd(C)
+
+    test_rs, test_cs, test_ratings = test
+    for p in (5, 10, 15, 20, 25, 30, 35, 40, 45, 49):
+        C_svd = (kU[:, :p] * kS[:p]) @ kVt[:p, :]
+        ESUM = 0
+        for i in range(len(test_rs)):
+            r = test_rs[i]
+            c = test_cs[i]
+            rating = test_ratings[i]
+            prediction = C_svd[r, R[c]]
+            delta = rating - prediction
+            delta = delta.item()
+            ESUM += delta * delta
+        ESUM /= len(test_rs)
+        error = ESUM**0.5
+        print(f'50-user cluster K-means, rank {p} svd RMSE: {error}')
+
+    #C_2, R_2 = k_means(C.T, 50, step=20000)
+
+    #with open('C_2.data', 'wb') as f:
+    #    pickle.dump(C_2, f)
+    #with open('R_2.data', 'wb') as f:
+    #    pickle.dump(R_2, f)
+
+    with open('C_2.data', 'rb') as f:
+        C_2 = pickle.load(f).T
+    with open('R_2.data', 'rb') as f:
+        R_2 = pickle.load(f)
+
+    test_rs, test_cs, test_ratings = test
+    ESUM = 0
+    for i in range(len(test_rs)):
+        r = test_rs[i]
+        c = test_cs[i]
+        rating = test_ratings[i]
+        prediction = C_2[R_2[r], R[c]]
+        delta = rating - prediction
+        delta = delta.item()
+        ESUM += delta * delta
+    ESUM /= len(test_rs)
+    error = ESUM**0.5
+    print(f'50-user cluster, 50-movie cluster K-means RMSE: {error}')
+
+    kU_2, kS_2, kVt_2 = svd(C_2, k=6)
+
+    test_rs, test_cs, test_ratings = test
+    for p in (1, 2, 3, 4, 5, 6):
+        C_svd = (kU[:, :p] * kS[:p]) @ kVt[:p, :]
+        ESUM = 0
+        for i in range(len(test_rs)):
+            r = test_rs[i]
+            c = test_cs[i]
+            rating = test_ratings[i]
+            prediction = C_svd[r, R[c]]
+            delta = rating - prediction
+            delta = delta.item()
+            ESUM += delta * delta
+        ESUM /= len(test_rs)
+        error = ESUM**0.5
+        print(
+            f'50-user cluster, 50-movie cluster K-means, rank {p} svd RMSE: {error}'
+        )
 
 
 def test():
@@ -341,6 +427,6 @@ def test():
 
 
 if __name__ == '__main__':
-    #svd_main()
+    svd_main()
     #test()
     k_means_main()
