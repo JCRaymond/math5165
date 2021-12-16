@@ -1,2 +1,5 @@
 .*
 !.gitignore
+*.data
+/midterms/m2/data/
+*.tar.gz
