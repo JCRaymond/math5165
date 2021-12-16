@@ -3,6 +3,7 @@
 import numpy as np
 import numpy.linalg as la
 import time
+from sys import stderr
 
 
 class timer:
@@ -31,7 +32,7 @@ class LogisticRegressionCost:
         grad[1:] = self.X[:, i]
         z = -alpha - np.dot(beta, self.X[:, i])
         p = 1 / (1 + np.exp(z))
-        grad *= self.y[i] - p
+        grad *= p - self.y[i]
         return grad
 
     # Do not use!
@@ -76,6 +77,8 @@ def stoch_grad_desc(cost,
         grad_x += cost.grad_i(step_idxs[i], x)
     grad_x /= step_samples
     for i in range(maxiters):
+        if i % 1000 == 0:
+            print(i, file=stderr)
         x = x - alpha * grad_x
         step_idxs = rng.choice(idxs,
                                step_samples,
@@ -91,8 +94,6 @@ def stoch_grad_desc(cost,
             stable_iters += 1
         else:
             stable_iters = 0
-        if i % 100 == 0:
-            print(i, grad_x, stable_iters)
     return x, maxiters
 
 
@@ -120,6 +121,8 @@ def stoch_grad_desc_ridge(cost,
     grad_x /= step_samples
     grad_x -= mu * x  # Ridge term
     for i in range(maxiters):
+        if i % 1000 == 0:
+            print(i, file=stderr)
         x = x - alpha * grad_x
         step_idxs = rng.choice(idxs,
                                step_samples,
@@ -171,7 +174,8 @@ def test():
     y = np.array((0, 1, 1, 0, 0, 1))
     cost = LogisticRegressionCost(X, y)
     initial_weights = np.zeros(cost.d + 1)
-    optimal_weights, iters = stoch_grad_desc(cost, initial_weights)
+    optimal_weights, iters = stoch_grad_desc(cost, initial_weights, alpha=0.1)
+    print(optimal_weights)
     pred = LogisticPredictor(optimal_weights)
     for i in range(X.shape[1]):
         print(pred(X[:, i]), y[i])
@@ -181,9 +185,31 @@ def solve():
     X, y = get_data('adult_train.csv')
     cost = LogisticRegressionCost(X, y)
     initial_weights = np.ones(cost.d + 1)
-    optimal_weights, iters = stoch_grad_desc(cost, initial_weights)
+    optimal_weights, iters = stoch_grad_desc(cost,
+                                             initial_weights,
+                                             train_perc=0.02,
+                                             epsilon=1e-5,
+                                             alpha=0.02,
+                                             maxiters=100000)
+    print(optimal_weights)
+    print('Training Iterations:', iters)
+    pred = LogisticPredictor(optimal_weights)
+    train_acc = 0
+    for i in range(X.shape[1]):
+        if pred(X[:, i]) == y[i]:
+            train_acc += 1
+    train_acc /= X.shape[1]
+    print('Training Accuracy:', train_acc)
+
+    X_test, y_test = get_data('adult_test.csv')
+    test_acc = 0
+    for i in range(X_test.shape[1]):
+        if pred(X_test[:, i]) == y_test[i]:
+            test_acc += 1
+    test_acc /= X_test.shape[1]
+    print('Test Accuracy:', test_acc)
 
 
 if __name__ == '__main__':
-    test()
-    #solve()
+    #test()
+    solve()
