@@ -1,0 +1,79 @@
+=== Rosenbrock(2,0.1) ===
+ - Basic -
+   time: 1.3681e+00
+  iters: 195586
+   f(x): 6.6559e-14
+
+ - Optimal -
+   time: 7.5932e-02
+  iters: 338
+   f(x): 5.3105e-14
+
+=== Rosenbrock(2,1) ===
+ - Basic -
+   time: 9.3449e-01
+  iters: 132120
+   f(x): 4.4855e-14
+
+ - Optimal -
+   time: 1.1301e-01
+  iters: 485
+   f(x): 3.9535e-14
+
+=== Rosenbrock(2,10) ===
+ - Basic -
+   time: 8.9832e-01
+  iters: 125494
+   f(x): 4.2731e-14
+
+ - Optimal -
+   time: 1.1143e+00
+  iters: 4775
+   f(x): 3.9937e-14
+
+=== Rosenbrock(2,25) ===
+ - Basic -
+   time: 9.0885e-01
+  iters: 125042
+   f(x): 4.2584e-14
+
+ - Optimal -
+   time: 3.1350e+00
+  iters: 13093
+   f(x): 3.9644e-14
+
+=== Rosenbrock(2,50) ===
+ - Basic -
+   time: 9.4367e-01
+  iters: 124890
+   f(x): 4.2541e-14
+
+ - Optimal -
+   time: 9.6530e+00
+  iters: 39609
+   f(x): 2.9818e-14
+
+=== Rosenbrock(2,100) ===
+ - Basic -
+   time: 7.1951e+00
+  iters: 1000000
+   f(x): 1.1131e+00
+
+ - Optimal -
+   time: 3.1153e+01
+  iters: 129774
+   f(x): 3.2091e-14
+
+=== Himmelblau ===
+ - Basic -
+   time: 5.6480e-03
+  iters: 761
+      x: [3. 2.]
+   f(x): 1.8501e-16
+
+ - Optimal -
+   time: 7.2492e-03
+  iters: 26
+      x: [3. 2.]
+   f(x): 4.2150e-17
+
