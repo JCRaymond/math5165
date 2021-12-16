@@ -236,7 +236,7 @@ def solve_ridge():
                                                    mu=0.1,
                                                    train_perc=0.02,
                                                    epsilon=1e-5,
-                                                   alpha=0.01,
+                                                   alpha=0.02,
                                                    maxiters=100000)
     print(optimal_weights)
     print('Training Iterations:', iters)
