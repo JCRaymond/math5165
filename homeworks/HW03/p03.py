@@ -233,6 +233,7 @@ def solve_ridge():
     initial_weights = np.ones(cost.d + 1)
     optimal_weights, iters = stoch_grad_desc_ridge(cost,
                                                    initial_weights,
+                                                   mu=0.1,
                                                    train_perc=0.02,
                                                    epsilon=1e-5,
                                                    alpha=0.01,
