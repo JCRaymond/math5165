@@ -36,6 +36,17 @@ def rand_mult(A, B, c, *, p=None):
     return C
 
 
+def mult(A, B):
+    m, n = A.shape
+    if B.shape[0] != n:
+        return None
+    n, l = B.shape
+    C = np.empty((m, l))
+    for i in range(n):
+        C += np.outer(A[:, i], B[i, :])
+    return C
+
+
 def solve():
     trials = 10
     print('k, full, unif, unif_err, opt, opt_err')
@@ -53,7 +64,7 @@ def solve():
             B = rng.random((n, l))
 
             t = timer()
-            C = A @ B
+            C = mult(A, B)
             t0 += t.get_time()
 
             t = timer()
